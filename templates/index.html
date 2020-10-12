@@ -1,0 +1,482 @@
+<html>
+
+
+
+<head>
+
+    <title>Dashboard</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+
+    <!--    <script src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>-->
+
+    <script type="text/javascript" src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+
+    <script type="text/javascript" charset="utf-8">
+        function setIndicators() {
+            var card = document.getElementsByClassName("card");
+            for (var i = 0; i < card.length; i++) {
+                if (card[i].getAttribute("percent") == 0) {
+                    card[i].style.background = "#5c000e";
+                } else if (card[i].getAttribute("percent") <= 20) {
+                    card[i].style.background = "#ffed4a";
+                } else {
+                    card[i].style.background = "linear-gradient(0deg, #f0f0f0, #ebebeb, #f0f0f0)";
+                }
+            }
+
+        }
+
+        function update() {
+            var percent = document.getElementsByClassName("percent");
+            var card = document.getElementsByClassName("card");
+            var number = document.getElementsByClassName("number");
+            for (var i = 0; i < percent.length; i++) {
+                number[i].lastElementChild.childNodes[0].nodeValue = card[i].getAttribute("percent");
+                percent[i].children[0].children[1].style.strokeDashoffset = card[i].getAttribute("disp");
+            }
+        }
+
+        window.onload = function() {
+            update();
+            setIndicators();
+        };
+
+        window.addEventListener('load', function() {
+
+            var modal = document.getElementById("myModal");
+
+            var contentcon = document.getElementsByClassName("Modal-content")[0];
+
+            var container = document.getElementsByClassName("main")[0];
+
+            console.log(container);
+
+            var socket = io.connect('http://wbs:5000');
+
+            var card = document.getElementsByClassName("card");
+
+            var btnClose = document.getElementById("closeModal");
+
+
+            for (var i = 0; i < card.length; i++) {
+
+                card[i].onclick = function(index) {
+
+                    return function() {
+
+                        contentcon.children[1].textContent = "Dispenser " + (index + 1);
+
+                        contentcon.children[2].textContent = "Remaining: " + card[index].getAttribute("remaining") + " mL";
+
+                        contentcon.children[3].textContent = "Estimated number of uses left: " + card[index].getAttribute("left");
+
+                        contentcon.children[4].textContent = "Last time used: " + card[index].getAttribute("last");
+
+                        contentcon.children[5].textContent = "Number of refill/s this day: " + card[index].getAttribute("day");
+
+                        contentcon.children[6].textContent = "Number of refill/s this month: " + card[index].getAttribute("month");
+
+                        contentcon.children[7].textContent = "Number of refill/s this year: " + card[index].getAttribute("year");
+
+                        contentcon.children[8].textContent = "Last date of refill: " + card[index].getAttribute("refill");
+
+
+                        modal.className = "Modal is-visuallyHidden";
+
+                        modal.setAttribute("opened", index);
+
+                        setTimeout(function() {
+
+                            container.className = "main is-blurred";
+
+                            modal.className = "Modal";
+
+                        }, 100);
+
+                        //                container.parentElement.className = "ModalOpen";
+
+                    }
+
+                }(i);
+
+            }
+
+            // Close the modal
+
+            btnClose.onclick = function() {
+
+                modal.className = "Modal is-hidden is-visuallyHidden";
+
+                container.className = "main";
+
+                //                container.parentElement.className = "";
+
+            }
+
+
+
+            // When the user clicks anywhere outside of the modal, close it
+
+            window.onclick = function(event) {
+
+                if (event.target == modal) {
+
+                    modal.className = "Modal is-hidden";
+
+                    container.className = "main";
+
+                    //                    container.parentElement.className = "";
+
+                }
+
+            }
+
+
+
+            socket.on('connect', function() {
+
+                socket.emit('my event', {
+
+                    data: 'I\'m connected!'
+
+                });
+
+            });
+
+            socket.on('data updated', function(data) {
+
+                console.log(data.data);
+
+                for (var i = 0; i < card.length; i++) {
+
+                    card[i].setAttribute("percent", data.data[i]);
+
+                    card[i].setAttribute("disp", data.data[6 + i]);
+
+                    card[i].setAttribute("remaining", data.data[12 + i]);
+
+                    card[i].setAttribute("left", data.data[18 + i]);
+
+                    card[i].setAttribute("last", data.data[24 + i])
+
+                    card[i].setAttribute("day", data.data[30 + i][1])
+
+                    card[i].setAttribute("month", data.data[36 + i][1])
+
+                    card[i].setAttribute("year", data.data[42 + i][1])
+
+                    card[i].setAttribute("refill", data.data[30 + i][0] + " - " + data.data[36 + i][0] + "/" + data.data[42 + i][0])
+
+                    if (modal.getAttribute("opened") < 7) {
+
+                        contentcon.children[2].textContent = "Remaining: " + card[modal.getAttribute("opened")].getAttribute("remaining") + " mL";
+
+                        contentcon.children[3].textContent = "Estimated number of uses left: " + card[modal.getAttribute("opened")].getAttribute("left");
+
+                        contentcon.children[4].textContent = "Last time used: " + card[index].getAttribute("last");
+
+                        contentcon.children[5].textContent = "Number of refill/s this day: " + card[index].getAttribute("day");
+
+                        contentcon.children[6].textContent = "Number of refill/s this month: " + card[index].getAttribute("month");
+
+                        contentcon.children[7].textContent = "Number of refill/s this year: " + card[index].getAttribute("year");
+
+                        contentcon.children[8].textContent = "Last date of refill: " + card[index].getAttribute("refill");
+
+
+                    }
+
+                }
+                update();
+                setIndicators();
+            });
+
+        })
+
+    </script>
+
+    <!--
+    <style>
+        .card:nth-child(1) svg circle:nth-child(2) {
+            stroke-dashoffset: "{{data[6]}}";
+
+
+
+        }
+
+
+
+        .card:nth-child(2) svg circle:nth-child(2) {
+            stroke-dashoffset: "{{data[7]}}";
+
+
+
+        }
+
+
+
+        .card:nth-child(3) svg circle:nth-child(2) {
+            stroke-dashoffset: "{{data[8]}}";
+
+
+
+        }
+
+
+
+        .card:nth-child(4) svg circle:nth-child(2) {
+            stroke-dashoffset: "{{data[9]}}";
+
+
+
+        }
+
+
+
+        .card:nth-child(5) svg circle:nth-child(2) {
+
+            stroke-dashoffset: "{{data[10]}}";
+
+
+
+        }
+
+
+
+        .card:nth-child(6) svg circle:nth-child(2) {
+            stroke-dashoffset: "{{data[11]}}";
+
+
+
+        }
+
+    </style>
+-->
+
+</head>
+
+
+
+<body>
+
+    <div id="myModal" class="Modal is-hidden is-visuallyHidden" opened="7">
+
+        <!-- Modal content -->
+
+        <div class="Modal-content">
+
+            <span id="closeModal" class="Close">&times;</span>
+
+            <h2>Dispenser 1</h2>
+
+            <p>Remaining:</p>
+
+            <p>Estimated number of uses left:</p>
+
+            <p>Last time used:</p>
+
+            <p>Number of refill/s this day:</p>
+
+            <p>Number of refill/s this month:</p>
+
+            <p>Number of refill/s this year:</p>
+
+            <p>Last date of refill:</p>
+        </div>
+
+    </div>
+
+    <div class="main">
+
+        <div class="navbar">
+
+            <div class="head">
+
+                <p>Dispenser Dashboard</p>
+
+            </div>
+
+        </div>
+
+        <div class="sensorcon">
+
+            <div class="card" percent="{{data[0]}}" disp="{{data[6]}}" remaining="{{data[12]}}" last="{{data[24]}}" left="{{data[18]}}" day="{{data[30][1]}}" month="{{data[36][1]}}" year="{{data[42][1]}}" refill="{{data[30][0]}}+{{data[36][0]}}+{{data[42][0]}}">
+
+                <div class="box">
+
+                    <div class="percent">
+
+                        <svg>
+
+                            <circle cx="70" cy="70" r="70"></circle>
+
+                            <circle id="c0" cx="70" cy="70" r="70"></circle>
+
+                        </svg>
+
+                        <div class="number">
+
+                            <h2>{{data[0]}}<span>%</span></h2>
+
+                        </div>
+
+                    </div>
+
+                    <h2 class="text">Dispenser 1</h2>
+
+                </div>
+
+            </div>
+
+            <div class="card" percent="{{data[1]}}" disp="{{data[7]}}" remaining="{{data[13]}}" last="{{data[25]}}" left="{{data[19]}}" day="{{data[31][1]}}" month="{{data[37][1]}}" year="{{data[43][1]}}" refill="{{data[31][0]}}+{{data[37][0]}}+{{data[43][0]}}">
+
+                <div class="box">
+
+                    <div class="percent">
+
+                        <svg>
+
+                            <circle cx="70" cy="70" r="70"></circle>
+
+                            <circle id="c1" cx="70" cy="70" r="70"></circle>
+
+                        </svg>
+
+                        <div class="number">
+
+                            <h2>{{data[1]}}<span>%</span></h2>
+
+                        </div>
+
+                    </div>
+
+                    <h2 class="text">Dispenser 2</h2>
+
+                </div>
+
+            </div>
+
+            <div class="card" percent="{{data[2]}}" disp="{{data[8]}}" remaining="{{data[14]}}" last="{{data[26]}}" left="{{data[20]}}" day="{{data[32][1]}}" month="{{data[38][1]}}" year="{{data[44][1]}}" refill="{{data[32][0]}}+{{data[38][0]}}+{{data[44][0]}}">
+
+                <div class="box">
+
+                    <div class="percent">
+
+                        <svg>
+
+                            <circle cx="70" cy="70" r="70"></circle>
+
+                            <circle id="c2" cx="70" cy="70" r="70"></circle>
+
+                        </svg>
+
+                        <div class="number">
+
+                            <h2>{{data[2]}}<span>%</span></h2>
+
+                        </div>
+
+                    </div>
+
+                    <h2 class="text">Dispenser 3</h2>
+
+                </div>
+
+            </div>
+
+            <div class="card" percent="{{data[3]}}" disp="{{data[9]}}" remaining="{{data[15]}}" last="{{data[27]}}" left="{{data[21]}}" day="{{data[33][1]}}" month="{{data[39][1]}}" year="{{data[45][1]}}" refill="{{data[33][0]}}+{{data[39][0]}}+{{data[45][0]}}">
+
+                <div class="box">
+
+                    <div class="percent">
+
+                        <svg>
+
+                            <circle cx="70" cy="70" r="70"></circle>
+
+                            <circle id="c3" cx="70" cy="70" r="70"></circle>
+
+                        </svg>
+
+                        <div class="number">
+
+                            <h2>{{data[3]}}<span>%</span></h2>
+
+                        </div>
+
+                    </div>
+
+                    <h2 class="text">Dispenser 4</h2>
+
+                </div>
+
+            </div>
+
+            <div class="card" percent="{{data[4]}}" disp="{{data[10]}}" remaining="{{data[16]}}" last="{{data[28]}}" left="{{data[22]}}" day="{{data[34][1]}}" month="{{data[40][1]}}" year="{{data[46][1]}}" refill="{{data[34][0]}}+{{data[40][0]}}+{{data[46][0]}}">
+
+                <div class="box">
+
+                    <div class="percent">
+
+                        <svg>
+
+                            <circle cx="70" cy="70" r="70"></circle>
+
+                            <circle id="c4" cx="70" cy="70" r="70"></circle>
+
+                        </svg>
+
+                        <div class="number">
+
+                            <h2>{{data[4]}}<span>%</span></h2>
+
+                        </div>
+
+                    </div>
+
+                    <h2 class="text">Dispenser 5</h2>
+
+                </div>
+
+            </div>
+
+            <div class="card" percent="{{data[5]}}" disp="{{data[11]}}" remaining="{{data[17]}}" last="{{data[29]}}" left="{{data[23]}}" day="{{data[35][1]}}" month="{{data[41][1]}}" year="{{data[47][1]}}" refill="{{data[35][0]}}+{{data[41][0]}}+{{data[47][0]}}">
+
+                <div class="box">
+
+                    <div class="percent">
+
+                        <svg>
+
+                            <circle cx="70" cy="70" r="70"></circle>
+
+                            <circle id="c5" cx="70" cy="70" r="70"></circle>
+
+                        </svg>
+
+                        <div class="number">
+
+                            <h2>{{data[5]}}<span>%</span></h2>
+
+                        </div>
+
+                    </div>
+
+                    <h2 class="text">Dispenser 6</h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+
+
+</html>
