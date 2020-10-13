@@ -176,15 +176,15 @@
 
                         contentcon.children[3].textContent = "Estimated number of uses left: " + card[modal.getAttribute("opened")].getAttribute("left");
 
-                        contentcon.children[4].textContent = "Last time used: " + card[index].getAttribute("last");
+                        contentcon.children[4].textContent = "Last time used: " + card[modal.getAttribute("opened")].getAttribute("last");
 
-                        contentcon.children[5].textContent = "Number of refill/s this day: " + card[index].getAttribute("day");
+                        contentcon.children[5].textContent = "Number of refill/s this day: " + card[modal.getAttribute("opened")].getAttribute("day");
 
-                        contentcon.children[6].textContent = "Number of refill/s this month: " + card[index].getAttribute("month");
+                        contentcon.children[6].textContent = "Number of refill/s this month: " + card[modal.getAttribute("opened")].getAttribute("month");
 
-                        contentcon.children[7].textContent = "Number of refill/s this year: " + card[index].getAttribute("year");
+                        contentcon.children[7].textContent = "Number of refill/s this year: " + card[modal.getAttribute("opened")].getAttribute("year");
 
-                        contentcon.children[8].textContent = "Last date of refill: " + card[index].getAttribute("refill");
+                        contentcon.children[8].textContent = "Last date of refill: " + card[modal.getAttribute("opened")].getAttribute("refill");
 
 
                     }
